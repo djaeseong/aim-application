@@ -4,19 +4,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-AIM Application is a Flutter project that supports Android, iOS, web, and desktop platforms (macOS, Linux, Windows).
+AIM Application is a Flutter investment portfolio management app with MVVM architecture pattern. The app displays portfolio assets (stocks, bonds, cash) with visualizations and detailed information. All UI text is in Korean.
 
 ## Development Commands
 
 ### Core Commands
 - `flutter run` - Run the app on connected device/emulator
-- `flutter run -d chrome` - Run on Chrome browser
+- `flutter run -d chrome` - Run on Chrome browser  
 - `flutter run -d macos` - Run on macOS desktop
 - `flutter test` - Run all widget tests
-- `flutter test test/widget_test.dart` - Run specific test file
-- `flutter analyze` - Run static analysis
+- `flutter analyze` - Run static analysis (check for linting issues)
 - `flutter pub get` - Install/update dependencies
-- `flutter pub outdated` - Check for outdated packages
 - `flutter build apk` - Build Android APK
 - `flutter build ios` - Build iOS app (requires Mac with Xcode)
 - `flutter build web` - Build for web deployment
@@ -27,39 +25,104 @@ During `flutter run`:
 - Press `R` for hot restart (resets state)
 - Press `q` to quit
 
-## Code Architecture
+### Code Generation
+- `flutter pub run build_runner build` - Generate code for freezed/json_serializable
+- `flutter pub run build_runner watch` - Watch mode for code generation
 
-### Main Application Structure
-The app follows standard Flutter architecture:
-- **lib/main.dart**: Entry point containing `MyApp` (root widget) and `MyHomePage` (stateful widget example)
-- **MaterialApp**: Root configuration for theming, routing, and app-level settings
-- **State Management**: Currently uses basic `setState()` for the counter example
+## Architecture & Patterns
 
-### Platform Support
-- **Android**: Configuration in `android/` directory, using Gradle build system
-- **iOS**: Configuration in `ios/` directory, Xcode project files
-- **Web**: Configuration in `web/` directory with index.html and PWA manifest
-- **Desktop**: Directories for `macos/`, `linux/`, `windows/` platforms
+### MVVM Pattern Structure
+Each screen follows this structure:
+```
+lib/presentation/[screen_name]/
+├── [screen_name]_screen.dart    # View (ConsumerWidget/HookConsumerWidget)
+├── [screen_name]_view_model.dart # ViewModel (ChangeNotifier)
+└── [screen_name]_state.dart     # State (immutable with copyWith)
+```
 
-### Testing
-- Widget tests located in `test/` directory
-- Tests use `flutter_test` package with `WidgetTester` for UI interaction testing
+### State Management
+- **Riverpod** with `ChangeNotifierProvider.autoDispose` for ViewModels
+- **State classes** are immutable with `copyWith()` methods
+- **GetIt** for dependency injection (SharedPreferences, services)
 
-### Configuration Files
-- **pubspec.yaml**: Project dependencies, Flutter SDK version (^3.8.1), and asset declarations
-- **analysis_options.yaml**: Dart analyzer configuration using `flutter_lints` package
+### Navigation
+- **GoRouter** for declarative routing
+- Routes defined with static `route` constants in each screen
+- Navigation through `context.goNamed()` or `context.pushNamed()`
 
-## Project-Specific Notes
+### Dependency Flow
+1. **main.dart** → Initializes GetIt dependencies via `injection.dart`
+2. **SharedPreference** service registered in GetIt for auth state
+3. **SplashScreen** checks auth → navigates to Login or Main
+4. **Screens** use Riverpod providers for state management
 
-- Flutter SDK requirement: ^3.8.1
-- Uses Material Design with customizable color scheme (currently deep purple seed color)
-- App title: "AIM Application"
-- Linting enabled via `flutter_lints: ^5.0.0`
+### UI Components Organization
+```
+lib/ui_packages/
+├── base/
+│   ├── spacing.dart      # AimSpacing widgets (use instead of SizedBox)
+│   └── config.dart       # UI configuration constants
+└── widgets/
+    ├── aim_text_field.dart    # Custom text input widgets
+    ├── aim_logo.dart          # App logo component
+    ├── pie_chart.dart         # Custom pie chart widget
+    └── social_login_button.dart # Social login buttons
+```
 
-## Development Workflow
+## Key Implementation Details
 
-1. Make code changes in `lib/` directory
-2. Use hot reload for immediate UI updates during development
-3. Run `flutter analyze` before committing to catch potential issues
-4. Run tests with `flutter test` to ensure functionality
-5. Build for target platform using appropriate `flutter build` command
+### Authentication Flow
+- **SplashViewModel** checks `SharedPreference.getUserId()`
+- Routes to `LoginScreen` if no user, `MainScreen` if authenticated
+- Login credentials stored in SharedPreferences (ID and password)
+
+### Mock Data Structure
+- All portfolio data in `lib/utils/mock_data.dart`
+- Asset types: 'stock', 'bond', 'etc' (cash)
+- Each asset contains: symbol, name, description, quantity, ratio, type
+
+### Form Validation Patterns
+Sign-up validation requirements:
+- **ID**: 7+ alphanumeric characters
+- **Password**: 10+ chars with uppercase, lowercase, numbers, special chars
+- **Phone**: Korean format (010-XXXX-XXXX)
+- **Email**: Standard email format
+
+### Screen-Specific Notes
+
+**MainScreen**: 
+- Dark theme (#2B3038 background)
+- Pie chart visualization of portfolio distribution
+- Assets grouped by type with color coding
+
+**StockDetailScreen**:
+- Mint background (#93D9D9)
+- Shows all assets grouped by category
+- Mock change percentages for each asset
+
+## Important Conventions
+
+### UI Spacing
+**Never use SizedBox directly**. Use `AimSpacing` components from `lib/ui_packages/base/spacing.dart`:
+- `AimSpacing.vert1` through `AimSpacing.vert20` for vertical spacing
+- `AimSpacing.horiz1` through `AimSpacing.horiz20` for horizontal spacing
+
+### Error Handling
+- Always check `context.mounted` after async operations before using context
+- Use `GetIt.instance.isRegistered<T>()` before accessing GetIt services
+- Wrap SharedPreferences access in try-catch blocks
+
+### Korean UI Text
+All user-facing text should be in Korean. Common terms:
+- 로그인 (Login)
+- 회원가입 (Sign Up)
+- 포트폴리오 (Portfolio)
+- 주식형 자산 (Stock Assets)
+- 채권형 자산 (Bond Assets)
+- 기타 자산 (Other Assets)
+
+## Environment Requirements
+
+- Flutter SDK: ^3.8.1
+- Dart SDK: Compatible with Flutter version
+- Platforms: Android, iOS, Web, macOS, Linux, Windows
