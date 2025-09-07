@@ -25,6 +25,8 @@ class SplashViewModel extends ChangeNotifier {
   Future<void> onInit(BuildContext context) async {
     // Use Future.delayed to avoid calling setState during build
     await Future.delayed(Duration.zero);
+    
+    if (!context.mounted) return;
     await _initializeApp(context);
   }
 
@@ -40,6 +42,8 @@ class SplashViewModel extends ChangeNotifier {
     try {
       await _performInitializationTasks();
       final userId = await _checkUserAuthentication();
+      
+      if (!context.mounted) return;
       _navigateBasedOnAuth(context, userId);
       _updateState(_state.toReady());
     } catch (error) {
