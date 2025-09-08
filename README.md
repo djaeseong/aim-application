@@ -16,7 +16,7 @@ AIM Application은 사용자의 투자 포트폴리오를 시각적으로 관리
 ## 🚀 시작하기
 
 ### 필요 환경
-- Flutter SDK: ^3.8.1
+- Flutter SDK: 3.32.8
 - Dart SDK: 호환되는 버전
 - 지원 플랫폼: Android, iOS, Web, macOS, Linux, Windows
 
@@ -95,10 +95,12 @@ lib/
 
 ### 화면별 특징
 
-#### 🔐 로그인/회원가입
-- ID/비밀번호 기반 인증
-- 소셜 로그인 지원 (Google, Apple, Facebook, Kakao, Naver)
-- 실시간 유효성 검사
+##### 로그인 구현 방법
+1. **회원가입 시**: ID와 Password를 SharedPreference에 저장
+2. **로그인 시**: 입력한 ID와 Password를 SharedPreference에 저장된 값과 비교
+   - 일치하면 로그인 성공 → 메인 페이지로 이동
+   - 불일치하면 로그인 실패 → 에러 메시지 표시
+3. **자동 로그인**: 앱을 종료 후 다시 실행 시 SharedPreference에 저장된 ID와 Password 값이 있으면 자동으로 메인 페이지로 이동
 
 #### 📊 메인 화면
 - 다크 테마 (#2B3038)
